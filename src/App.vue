@@ -1,105 +1,76 @@
 <template>
-  <div class="hero-bg">
-    <div class="container">
-      <header class="header-glass">
-        <h1>
-          <span class="title-gradient neon-flicker">MLP神经网络指标</span>
-        </h1>
-        <div class="powered">
-          <span>powered by</span>
-          <a href="mailto:padin@foxmail.com" class="author">padin@foxmail.com</a>
-        </div>
-      </header>
-      <section class="chart-section">
-        <div class="chart-card neon-glow">
-          <LineChart :chartData="mergedChartData" />
-        </div>
-      </section>
-      <div class="warn-tip">
+  <div>
+    <header>
+      <h1>
+        <span class="title-gradient neon-flicker">Crypto Analysis Dashboard</span>
+      </h1>
+      <div class="powered">
+        <span>powered by</span>
+        <a href="mailto:padin@foxmail.com" class="author">padin@foxmail.com</a>
+      </div>
+    </header>
+    <div class="tab-bar">
+      <div
+        v-for="tab in tabs"
+        :key="tab.key"
+        :class="['tab-item', { active: activeTab === tab.key }]"
+        @click="activeTab = tab.key"
+      >
+        {{ tab.label }}
+      </div>
+    </div>
+    <section>
+      <MLPChart v-if="activeTab==='mlp'" />
+      <NormalDistChart v-if="activeTab==='other'" />
+      <MeanReversionChart v-if="activeTab==='mean'" />
+    </section>
+    <div class="warn-tip">
         <span class="warn-emoji">⚠️</span>
         数据仅供学习交流使用，不构成任何投资建议。
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import LineChart from './components/LineChart.vue'
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref } from 'vue'
+import MLPChart from './components/MLPChart.vue'
+import NormalDistChart from './components/NormalDistChart.vue'
+import MeanReversionChart from './components/MeanReversionChart.vue'
 
-const WINDOW_SIZE = 1000
-const groupedData = ref({})
-
-const initData = []
-
-initData.forEach(item => {
-  if (!groupedData.value[item.name]) {
-    groupedData.value[item.name] = []
-  }
-  groupedData.value[item.name].push(item)
-})
-
-const mergedChartData = computed(() => {
-  return Object.values(groupedData.value).flat()
-})
-
-let ws = null
-
-onMounted(() => {
-  ws = new WebSocket('wss://ai.wyizd.com/ws/')
-  ws.onmessage = (event) => {
-    try {
-      const arr = JSON.parse(event.data)
-      if (Array.isArray(arr)) {
-        const newGroup = { ...groupedData.value }
-        arr.forEach(data => {
-          const item = {
-            name: data.name,
-            value: data.upRate, // 可自定义展示字段
-            time: data.updateTime
-          }
-          if (!newGroup[item.name]) {
-            newGroup[item.name] = []
-          }
-          newGroup[item.name] = [
-            ...newGroup[item.name].slice(-WINDOW_SIZE + 1),
-            item
-          ]
-        })
-        groupedData.value = newGroup
-      } else if (arr && typeof arr === 'object') {
-        // 兼容单对象
-        const data = arr
-        const item = {
-          name: data.name,
-          value: data.upRate,
-          time: data.updateTime
-        }
-        const newGroup = { ...groupedData.value }
-        if (!newGroup[item.name]) {
-          newGroup[item.name] = []
-        }
-        newGroup[item.name] = [
-          ...newGroup[item.name].slice(-WINDOW_SIZE + 1),
-          item
-        ]
-        groupedData.value = newGroup
-      }
-    } catch (e) {
-      console.error('Error parsing message:', e)
-    }
-  }
-  ws.onerror = () => {
-    console.error('WebSocket error')
-  }
-})
-
-onUnmounted(() => {
-  ws?.close()
-})
+const tabs = [
+  { key: 'mlp', label: 'MLP神经网络' },
+  { key: 'other', label: '正态分布' },
+  { key: 'mean', label: '均值回归' }
+]
+const activeTab = ref('mlp')
 </script>
 
 <style scoped>
+
+.tab-bar {
+  display: flex;
+  gap: 16px;
+  margin: 18px 0 8px 0;
+  justify-content: center;
+}
+.tab-item {
+  padding: 8px 22px;
+  font-size: 1.08rem;
+  color: #9ee7ff;
+  cursor: pointer;
+  border-radius: 14px 14px 0 0;
+  background: rgba(255,255,255,0.06);
+  transition: background 0.2s, color 0.2s;
+  font-weight: 500;
+  border-bottom: 2.5px solid transparent;
+}
+.tab-item.active {
+  color: #53d3ff;
+  background: #253b53;
+  border-bottom: 2.5px solid #6ef195;
+  font-weight: 700;
+}
+
 :global(body) {
   margin: 0;
   padding: 0;
