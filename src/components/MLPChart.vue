@@ -56,7 +56,8 @@ const renderChart = () => {
         formatter: val => val.split(' ')[1]
       }
     },
-    yAxis: { type: 'value' },
+    yAxis: { type: 'value' ,min:0, max: 100, name: '上涨概率(%)', axisLabel: { color: '#5cfaff' }},
+    color: ['#53d3ff', '#ffb958', '#6ef195', '#ff6f61', '#9b59b6'],
     series,
     grid: { left: 60, right: 40, top: 60, bottom: 60 }
   })
@@ -79,7 +80,7 @@ onMounted(() => {
       }
       const incoming = flatArr.map(data => ({
         name: data.name,
-        value: data.upRate ?? data.value,
+        value: Number(((data.upRate ?? data.value) * 100).toFixed(2)),
         time: data.updateTime ?? data.time
       }))
       chartData.value = mergeData(chartData.value, incoming)
